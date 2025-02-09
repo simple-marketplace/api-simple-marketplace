@@ -1,6 +1,6 @@
-run command: `go run main.go`
-http server runs on localhost:8080
-one example calling the /receipts/process endpoint:
+run command: `go run main.go` <br />
+http server runs on localhost:8080 <br />
+one example calling the /receipts/process endpoint: 
 ```
 curl --location --request POST 'localhost:8080/receipts/process' \
 --header 'Content-Type: application/json' \
