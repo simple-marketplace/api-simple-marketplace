@@ -5,20 +5,34 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v8"
 )
 
-func SearchProducts(w http.ResponseWriter, r *http.Request) {
+type SearchResult struct {
+	ID   uint
+	Name string
+}
 
+type SearchProductsHandler struct{}
+
+func (h SearchProductsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Should Use Get Method", http.StatusMethodNotAllowed)
 		return
 	}
+	queryParam := r.URL.Query().Get("name")
+	if queryParam == "" {
+		fmt.Fprintf(w, "Query parameter 'name' is missing!")
+		return
+	}
 
 	esClient := r.Context().Value("es").(*elasticsearch.Client)
-	query := `{ "query": { "match_all": {} }, "_source": ["name"] }`
+
+	query := fmt.Sprintf(`{"query":{"match":{"name":{"query":"%s"}}},"_source":["name"]}`, queryParam)
+
 	res, err := esClient.Search(
 		esClient.Search.WithIndex("products"),
 		esClient.Search.WithBody(strings.NewReader(query)),
@@ -39,16 +53,27 @@ func SearchProducts(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Error parsing the response body: %s", err)
 	}
 
-	// Print the response (for debugging)
-	fmt.Printf("%v\n", result)
+	searchResults := []SearchResult{}
 
 	// Extracting hits
-	// hits := result["hits"].(map[string]interface{})["hits"].([]interface{})
-	// for _, hit := range hits {
-	// 	doc := hit.(map[string]interface{})["_source"]
-	// 	fmt.Println("Document:", doc)
-	// }
+	hits := result["hits"].(map[string]interface{})["hits"].([]interface{})
+	for _, hit := range hits {
+		hitID := hit.(map[string]interface{})["_id"]
+		hitName := hit.(map[string]interface{})["_source"].(map[string]interface{})["name"]
+
+		stringID, _ := hitID.(string)
+		id64, _ := strconv.ParseUint(stringID, 10, 0)
+		id := uint(id64)
+		name, _ := hitName.(string)
+
+		searchResults = append(searchResults, SearchResult{
+			ID:   id,
+			Name: name,
+		})
+	}
 
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(searchResults)
 
 }

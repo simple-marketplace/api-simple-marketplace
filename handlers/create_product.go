@@ -9,7 +9,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateProduct(w http.ResponseWriter, r *http.Request) {
+type CreateProductHandler struct{}
+
+func (h CreateProductHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, "Should Use Post Method", http.StatusMethodNotAllowed)

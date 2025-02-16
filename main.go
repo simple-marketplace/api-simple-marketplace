@@ -6,19 +6,36 @@ import (
 	"api-simple-marketplace/handlers"
 	"api-simple-marketplace/middleware"
 	"net/http"
+
+	"github.com/rs/cors"
 )
 
 func main() {
 	dsn := "host=icy-smoke-2219.fly.dev user=postgres password=df05vLaFDnmefci dbname=postgres port=5433 sslmode=disable"
-	_db := db.NewDatabaseClient(dsn)
-	_es := es.NewElasticsearchClient()
+
+	dbMiddleware := middleware.DBMiddleware{
+		M: db.NewDatabaseClient(dsn),
+	}
+
+	esMiddleware := middleware.ESMiddleware{
+		M: es.NewElasticsearchClient(),
+	}
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type"},
+		AllowCredentials: true,
+	})
 
 	// _db.AutoMigrate(&db.Product{})
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/products", middleware.DBMiddleware(_db, http.HandlerFunc(handlers.GetProducts)))
-	mux.HandleFunc("/products/create", middleware.DBMiddleware(_db, http.HandlerFunc(handlers.CreateProduct)))
-	mux.HandleFunc("/products/search", middleware.ESMiddleware(_es, http.HandlerFunc(handlers.SearchProducts)))
-	http.ListenAndServe(":8080", mux)
+	mux.HandleFunc("/products", dbMiddleware.Apply(handlers.GetProductsHandler{}))
+	mux.HandleFunc("/products/create", dbMiddleware.Apply(handlers.CreateProductHandler{}))
+	mux.HandleFunc("/products/search", esMiddleware.Apply(handlers.SearchProductsHandler{}))
+
+	muxWithCors := c.Handler(mux)
+	http.ListenAndServe(":8080", muxWithCors)
 
 }

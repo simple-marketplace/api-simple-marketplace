@@ -8,7 +8,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetProducts(w http.ResponseWriter, r *http.Request) {
+type GetProductsHandler struct{}
+
+func (h GetProductsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
 		http.Error(w, "Should Use Get Method", http.StatusMethodNotAllowed)
