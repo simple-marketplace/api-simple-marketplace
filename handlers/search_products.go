@@ -31,7 +31,7 @@ func (h SearchProductsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	esClient := r.Context().Value("es").(*elasticsearch.Client)
 
-	query := fmt.Sprintf(`{"query":{"match":{"name":{"query":"%s"}}},"_source":["name"]}`, queryParam)
+	query := fmt.Sprintf(`{"query":{"match":{"name":{"query":"%s", "fuzziness": "0", "fuzzy_transpositions": true}}},"_source":["name"]}`, queryParam)
 
 	res, err := esClient.Search(
 		esClient.Search.WithIndex("products"),

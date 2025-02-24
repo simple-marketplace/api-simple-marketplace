@@ -3,7 +3,6 @@ package handlers
 import (
 	"api-simple-marketplace/db"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -33,8 +32,6 @@ func (h CreateProductHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, res.Error.Error(), http.StatusBadRequest)
 		return
 	}
-
-	fmt.Printf("%v\n", res)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")

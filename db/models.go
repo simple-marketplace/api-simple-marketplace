@@ -6,6 +6,13 @@ type Product struct {
 	Description string
 }
 
+type User struct {
+	ID       uint   `gorm:"unique;autoIncrement"`
+	Username string `gorm:"primaryKey"`
+	Email    string
+	Password string
+}
+
 type Result struct {
 	ID uint `json:"id"`
 }

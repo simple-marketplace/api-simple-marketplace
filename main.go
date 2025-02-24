@@ -28,12 +28,13 @@ func main() {
 		AllowCredentials: true,
 	})
 
-	// _db.AutoMigrate(&db.Product{})
+	// dbMiddleware.M.AutoMigrate(&db.User{})
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/products", dbMiddleware.Apply(handlers.GetProductsHandler{}))
 	mux.HandleFunc("/products/create", dbMiddleware.Apply(handlers.CreateProductHandler{}))
 	mux.HandleFunc("/products/search", esMiddleware.Apply(handlers.SearchProductsHandler{}))
+	mux.HandleFunc("/users", dbMiddleware.Apply(&handlers.UserExistsHandler{}))
 
 	muxWithCors := c.Handler(mux)
 	http.ListenAndServe(":8080", muxWithCors)
